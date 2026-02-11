@@ -21,6 +21,21 @@ function log(message) {
   console.log(`[${timestamp}] ${message}`);
 }
 
+function readStatusFile() {
+  try {
+    if (fs.existsSync(STATUS_FILE)) {
+      const content = fs.readFileSync(STATUS_FILE, 'utf-8');
+      if (content && content.trim().length > 0) {
+        lastStatusHtml = content;
+        return true;
+      }
+    }
+  } catch (err) {
+    log(`Warning: failed to read status.html: ${err.message}`);
+  }
+  return false;
+}
+
 function refreshData() {
   if (isRefreshing) {
     log('Refresh already in progress, skipping...');
@@ -58,24 +73,18 @@ function refreshData() {
       return;
     }
 
-    try {
-      const htmlMatch = stdout.match(/<html[\s\S]*<\/html>/i);
-      if (htmlMatch) {
-        lastStatusHtml = htmlMatch[0];
-        lastUpdateTime = timestamp;
-        log('Data refreshed successfully');
+    log('client.js completed successfully');
 
-        // Write to file for persistence
-        fs.writeFile(STATUS_FILE, lastStatusHtml, (err) => {
-          if (err) {
-            log(`Warning: failed to write status.html: ${err.message}`);
-          }
-        });
+    // Read the status.html file that client.js created
+    try {
+      if (readStatusFile()) {
+        lastUpdateTime = timestamp;
+        log('Data refreshed successfully from status.html');
       } else {
-        log('Warning: no HTML found in client.js output');
+        log('Warning: status.html not found or empty after client.js execution');
       }
     } catch (err) {
-      log(`Error processing client.js output: ${err.message}`);
+      log(`Error reading status.html: ${err.message}`);
     }
   });
 

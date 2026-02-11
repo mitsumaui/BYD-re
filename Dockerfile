@@ -23,6 +23,9 @@ RUN if [ -f /app/package.json ] || [ -f /app/package-lock.json ]; then \
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
+# Give nodejs user write permissions to /app directory (for status.html)
+RUN chown -R nodejs:nodejs /app
+
 USER nodejs
 
 # Health check
